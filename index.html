@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VPN Key စီမံခန့်ခွဲမှု</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Padauk:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        /* Use Padauk for Burmese text and Inter for English/numbers */
+        body {
+            font-family: 'Padauk', 'Inter', sans-serif;
+        }
+        /* Ensure Inter is used for non-Burmese text */
+        [lang="en"] {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+
+    <div class="container mx-auto max-w-7xl p-4 md:p-8">
+        
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">VPN Key စီမံခန့်ခွဲမှု</h1>
+            <p class="text-gray-600 mt-1">ရောင်းချထားသော Key များကို ခြေရာခံပြီး ရက်ကုန်ခါနီး သတိပေးချက်များ ကြည့်ရှုပါ။</p>
+        </header>
+
+        <!-- Main Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Left Column: Input Form & Alerts -->
+            <div class="lg:col-span-1 space-y-8">
+                
+                <!-- Add New Key Form -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-700">Key အသစ်ထည့်ရန်</h2>
+                    <form id="addKeyForm" class="space-y-4">
+                        <div>
+                            <label for="customerName" class="block text-sm font-medium text-gray-700">ဝယ်သူအမည်</label>
+                            <input type="text" id="customerName" name="customerName" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="vpnKey" class="block text-sm font-medium text-gray-700">VPN Key (ss://...)</label>
+                            <textarea id="vpnKey" name="vpnKey" rows="3" required
+                                      class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"></textarea>
+                        </div>
+                        <div>
+                            <label for="purchaseDate" class="block text-sm font-medium text-gray-700">ဝယ်ယူသည့်ရက်စွဲ</label>
+                            <input type="date" id="purchaseDate" name="purchaseDate" required
+                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="duration" class="block text-sm font-medium text-gray-700">သက်တမ်း</label>
+                            <select id="duration" name="duration" required
+                                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 bg-white">
+                                <option value="1">၁ လ</option>
+                                <option value="3">၃ လ</option>
+                                <option value="6">၆ လ</option>
+                            </select>
+                        </div>
+                        <button type="submit"
+                                class="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-700 transition duration-200 shadow-sm">
+                            <i class="fas fa-plus-circle mr-2"></i> စာရင်းသွင်းမည်
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Expiry Alerts -->
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-xl font-semibold mb-4 text-yellow-600 flex items-center">
+                        <i class="fas fa-exclamation-triangle mr-3"></i> ရက်ကုန်ခါနီး သတိပေးချက်
+                    </h2>
+                    <div id="alertBox" class="space-y-3">
+                        <!-- Alerts will be injected here -->
+                        <p id="noAlerts" class="text-gray-500">ရက်ကုန်ခါနီး Key များ မရှိပါ။</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Key List Table -->
+            <div class="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-semibold mb-4 text-gray-700">Key စာရင်းများ</h2>
+                
+                <!-- Loading State -->
+                <div id="loadingState" class="text-center py-8">
+                    <p class="text-gray-500 animate-pulse">ဒေတာများ ရယူနေပါသည်...</p>
+                </div>
+
+                <!-- Key Table -->
+                <div id="keyTableContainer" class="overflow-x-auto hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ဝယ်သူအမည်</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ဝယ်သည့်ရက်</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ကုန်ဆုံးမည့်ရက်</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ကျန်ရက်</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">အခြေအနေ</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="keyTableBody" class="bg-white divide-y divide-gray-200">
+                            <!-- Key rows will be injected here -->
+                        </tbody>
+                    </table>
+                    <p id="noKeys" class="text-center py-8 text-gray-500 hidden">စာရင်းသွင်းထားသော Key များ မရှိပါ။</p>
+                </div>
+            </div>
+
+        </div>
+        
+        <!-- User ID Display -->
+        <div id="authStatus" class="mt-8 text-center text-gray-500 text-sm">
+            ချိတ်ဆက်နေပါသည်...
+        </div>
+
+    </div> <!-- /container -->
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg transition-opacity duration-300 opacity-0 invisible">
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInAnonymously, 
+            signInWithCustomToken, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            addDoc, 
+            deleteDoc, 
+            onSnapshot,
+            query,
+            setLogLevel
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- Global State ---
+        const appState = {
+            db: null,
+            auth: null,
+            userId: null,
+            unsubscribe: null,
+        };
+
+        // --- Firebase Config ---
+        // These global variables are provided by the environment.
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-vpn-tracker';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        
+        // --- UI Elements ---
+        const addKeyForm = document.getElementById('addKeyForm');
+        const keyTableBody = document.getElementById('keyTableBody');
+        const keyTableContainer = document.getElementById('keyTableContainer');
+        const loadingState = document.getElementById('loadingState');
+        const noKeys = document.getElementById('noKeys');
+        const alertBox = document.getElementById('alertBox');
+        const noAlerts = document.getElementById('noAlerts');
+        const authStatus = document.getElementById('authStatus');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+
+        // --- Helper Functions ---
+
+        /**
+         * Calculates expiry date and remaining days.
+         * @param {string} purchaseDateStr - ISO date string (e.g., "2025-11-14")
+         * @param {number} durationMonths - Number of months (1, 3, 6)
+         * @returns {object} { expiryDate, remainingDays }
+         */
+        function calculateExpiry(purchaseDateStr, durationMonths) {
+            const purchaseDate = new Date(purchaseDateStr + "T00:00:00"); // Avoid timezone issues
+            const expiryDate = new Date(purchaseDate);
+            expiryDate.setMonth(expiryDate.getMonth() + parseInt(durationMonths));
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); // Normalize today's date
+            expiryDate.setHours(0, 0, 0, 0); // Normalize expiry date
+
+            const diffTime = expiryDate.getTime() - today.getTime();
+            const remainingDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            return { expiryDate, remainingDays };
+        }
+
+        /**
+         * Formats a Date object to YYYY-MM-DD
+         * @param {Date} date - The date object
+         * @returns {string} Formatted date string
+         */
+        function formatDate(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        /**
+         * Renders all keys to the table and updates alerts
+         * @param {array} keys - Array of key objects from Firestore
+         */
+        function renderData(keys) {
+            // Sort data: expiring soon first, then active, then expired
+            const sortedKeys = keys.sort((a, b) => {
+                return a.computed.remainingDays - b.computed.remainingDays;
+            });
+
+            // Clear previous data
+            keyTableBody.innerHTML = '';
+            alertBox.innerHTML = '';
+            
+            let expiringKeys = [];
+            const EXPIRY_THRESHOLD_DAYS = 7; // Alert if 7 days or less remaining
+
+            if (sortedKeys.length === 0) {
+                noKeys.classList.remove('hidden');
+                keyTableContainer.classList.add('hidden');
+                loadingState.classList.add('hidden');
+                noAlerts.classList.remove('hidden');
+                alertBox.appendChild(noAlerts);
+                return;
+            }
+
+            keyTableContainer.classList.remove('hidden');
+            noKeys.classList.add('hidden');
+            loadingState.classList.add('hidden');
+
+            sortedKeys.forEach(key => {
+                const { customerName, vpnKey, purchaseDate, durationMonths, id } = key;
+                const { expiryDate, remainingDays } = key.computed;
+
+                let statusText, statusClass, rowClass;
+
+                if (remainingDays <= 0) {
+                    statusText = "ကုန်ဆုံး";
+                    statusClass = "bg-red-100 text-red-800";
+                    rowClass = "bg-red-50 opacity-70";
+                } else if (remainingDays <= EXPIRY_THRESHOLD_DAYS) {
+                    statusText = "ကုန်ခါနီး";
+                    statusClass = "bg-yellow-100 text-yellow-800";
+                    rowClass = "bg-yellow-50";
+                    expiringKeys.push({ name: customerName, days: remainingDays });
+                } else {
+                    statusText = "အသုံးပြုနိုင်";
+                    statusClass = "bg-green-100 text-green-800";
+                    rowClass = "bg-white";
+                }
+
+                // Render Table Row
+                const tr = document.createElement('tr');
+                tr.className = rowClass;
+                tr.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${customerName}</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button title="Key ကို ကူးယူရန်" class="copy-key-btn text-blue-600 hover:text-blue-800" data-key="${vpnKey}">
+                            <i class="fas fa-copy"></i> ကူးယူရန်
+                        </button>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${purchaseDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${formatDate(expiryDate)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold ${remainingDays <= EXPIRY_THRESHOLD_DAYS ? 'text-red-600' : 'text-gray-900'}">
+                        ${remainingDays > 0 ? `${remainingDays} ရက်` : '0 ရက်'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="delete-key-btn text-red-600 hover:text-red-800" data-id="${id}" title="ဖျက်ရန်">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </td>
+                `;
+                keyTableBody.appendChild(tr);
+            });
+
+            // Render Alerts
+            if (expiringKeys.length > 0) {
+                noAlerts.classList.add('hidden');
+                expiringKeys.forEach(key => {
+                    const alertEl = document.createElement('div');
+                    alertEl.className = 'border-l-4 border-yellow-400 bg-yellow-50 p-3 rounded';
+                    alertEl.innerHTML = `
+                        <p class="font-semibold text-yellow-800">${key.name}</p>
+                        <p class="text-sm text-yellow-700">Key သည် <strong class="lang='en'">${key.days}</strong> ရက်အတွင်း ကုန်ဆုံးပါမည်။</p>
+                    `;
+                    alertBox.appendChild(alertEl);
+                });
+            } else {
+                noAlerts.classList.remove('hidden');
+                alertBox.appendChild(noAlerts);
+            }
+        }
+
+        /**
+         * Shows a success toast notification
+         * @param {string} message - The message to display
+         */
+        function showToast(message) {
+            toastMessage.textContent = message;
+            toast.classList.remove('opacity-0', 'invisible');
+            toast.classList.add('opacity-100', 'visible');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'visible');
+                toast.classList.add('opacity-0', 'invisible');
+            }, 3000);
+        }
+
+        /**
+         * Copies text to clipboard using the fallback method
+         * @param {string} text - The text to copy
+         */
+        function copyToClipboard(text) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed'; // Prevent scrolling to bottom
+            textarea.style.opacity = 0;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast('Key ကို ကူးယူပြီးပါပြီ။');
+            } catch (err) {
+                console.error('Copy to clipboard failed:', err);
+                showToast('ကူးယူ၍ မရပါ။');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        // --- Event Handlers ---
+
+        /**
+         * Handles the form submission to add a new key
+         */
+        async function handleAddKey(e) {
+            e.preventDefault();
+            if (!appState.db || !appState.userId) return;
+
+            const customerName = addKeyForm.customerName.value;
+            const vpnKey = addKeyForm.vpnKey.value;
+            const purchaseDate = addKeyForm.purchaseDate.value;
+            const durationMonths = addKeyForm.duration.value;
+
+            try {
+                const collectionRef = collection(appState.db, 'artifacts', appId, 'users', appState.userId, 'vpn_keys');
+                await addDoc(collectionRef, {
+                    customerName,
+                    vpnKey,
+                    purchaseDate,
+                    durationMonths: parseInt(durationMonths)
+                });
+                
+                showToast('Key အသစ် ထည့်သွင်းပြီးပါပြီ။');
+                addKeyForm.reset();
+                // Set date back to today
+                document.getElementById('purchaseDate').valueAsDate = new Date();
+            } catch (error) {
+                console.error("Error adding document: ", error);
+                showToast('Error: Key မထည့်နိုင်ပါ။');
+            }
+        }
+
+        /**
+         * Handles clicks on delete or copy buttons
+         */
+        async function handleTableClick(e) {
+            // Delete button click
+            const deleteButton = e.target.closest('.delete-key-btn');
+            if (deleteButton) {
+                const docId = deleteButton.dataset.id;
+                if (!appState.db || !appState.userId || !docId) return;
+                
+                // No confirm() allowed, so we delete directly.
+                // In a real app, a custom modal is better.
+                try {
+                    const docRef = doc(appState.db, 'artifacts', appId, 'users', appState.userId, 'vpn_keys', docId);
+                    await deleteDoc(docRef);
+                    showToast('Key ကို ဖျက်လိုက်ပါပြီ။');
+                } catch (error) {
+                    console.error("Error deleting document: ", error);
+                    showToast('Error: Key မဖျက်နိုင်ပါ။');
+                }
+            }
+
+            // Copy button click
+            const copyButton = e.target.closest('.copy-key-btn');
+            if (copyButton) {
+                const keyToCopy = copyButton.dataset.key;
+                copyToClipboard(keyToCopy);
+            }
+        }
+        
+        // --- Firestore Real-time Listener ---
+        function setupSnapshotListener() {
+            if (appState.unsubscribe) {
+                appState.unsubscribe(); // Unsubscribe from previous listener if exists
+            }
+            if (!appState.db || !appState.userId) return;
+            
+            const collectionRef = collection(appState.db, 'artifacts', appId, 'users', appState.userId, 'vpn_keys');
+            const q = query(collectionRef); // Can add orderBy here if indexes are set up, but safer to sort in JS
+            
+            appState.unsubscribe = onSnapshot(q, (snapshot) => {
+                const keys = [];
+                snapshot.forEach((doc) => {
+                    const data = doc.data();
+                    const { expiryDate, remainingDays } = calculateExpiry(data.purchaseDate, data.durationMonths);
+                    keys.push({ 
+                        ...data, 
+                        id: doc.id,
+                        computed: { expiryDate, remainingDays }
+                    });
+                });
+                renderData(keys);
+            }, (error) => {
+                console.error("Error getting documents: ", error);
+                loadingState.textContent = "Error: ဒေတာ ရယူ၍ မရပါ။";
+                loadingState.classList.remove('animate-pulse');
+            });
+        }
+        
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default purchase date to today
+            document.getElementById('purchaseDate').valueAsDate = new Date();
+            
+            // Add event listeners
+            addKeyForm.addEventListener('submit', handleAddKey);
+            keyTableBody.addEventListener('click', handleTableClick);
+
+            try {
+                // Initialize Firebase
+                const app = initializeApp(firebaseConfig);
+                appState.db = getFirestore(app);
+                appState.auth = getAuth(app);
+                
+                // Set log level for debugging
+                setLogLevel('debug'); 
+                
+                // Listen for auth state changes
+                onAuthStateChanged(appState.auth, async (user) => {
+                    if (user) {
+                        // User is signed in
+                        appState.userId = user.uid;
+                        authStatus.textContent = `သင်၏ User ID: ${appState.userId}`;
+                        authStatus.classList.remove('text-gray-500');
+                        authStatus.classList.add('text-green-600', 'font-mono');
+                        
+                        // Setup Firestore listener now that we are authenticated
+                        setupSnapshotListener();
+                        
+                    } else {
+                        // User is signed out or not yet signed in
+                        appState.userId = null;
+                        authStatus.textContent = "Authenticating...";
+                        
+                        // Attempt to sign in
+                        try {
+                            if (initialAuthToken) {
+                                await signInWithCustomToken(appState.auth, initialAuthToken);
+                            } else {
+                                await signInAnonymously(appState.auth);
+                            }
+                        } catch (error) {
+                            console.error("Authentication failed: ", error);
+                            authStatus.textContent = "Authentication Error";
+                            authStatus.classList.add('text-red-600');
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Firebase initialization failed: ", error);
+                document.body.innerHTML = '<h1 class="text-red-500 text-center p-8">Error: Firebase failed to initialize. Please check console.</h1>';
+            }
+        });
+
+    </script>
+</body>
+</html>
